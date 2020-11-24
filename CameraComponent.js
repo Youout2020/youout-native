@@ -1,33 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Camera } from 'expo-camera';
-import { Alert, Text, Button, View, TouchableOpacity, Vibration, LogBox, Modal, StyleSheet, TextInput } from 'react-native';
-
+import { Text, View, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Modal, TextInput } from 'react-native';
+import { styles, defaultStyle } from './styles';
 import { detectLabels, compareLabels } from './util/aws';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 
-const defaultStyle = {
-  width: 100,
-  height: 100,
-  backgroundColor: 'white',
-  borderRadius: 50,
-  alignItems: 'center',
-  justifyContent: 'center'
-};
 
 const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white' }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.keywordContainer}>
+        <Text style={styles.keywordLabel}>
+          Keyword🐣
+        </Text>
+        <Text style={styles.keyword}>
           {keyword}
         </Text>
-        <Text style={{ fontSize: 30 }}>
+        <Text style={styles.keywordMessage}>
           찍어!
         </Text>
-        <TouchButton text='OK!' onPress={() => setModalVisible(false)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
+        <TouchButton
+          text='OK 📷'
+          onPress={() => setModalVisible(false)}
+          style={{ ...defaultStyle.button, ...styles.keywordButton }}
+        />
       </View>
     </Modal>
   )
@@ -36,18 +36,25 @@ const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
 const HintModal = ({ modalVisible, setModalVisible, hint }) => {
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white' }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.hintContainer}>
+        <Text style={styles.hintLabel}>
+          Hint🤡
+        </Text>
+        <Text style={styles.hint}>
           {hint}
         </Text>
-        <Text style={{ fontSize: 30 }}>
+        <Text style={styles.hintMessage}>
           이게 힌트야!
         </Text>
-        <TouchButton text='OK!' onPress={() => setModalVisible(false)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
+        <TouchButton
+          text='OK👍'
+          onPress={() => setModalVisible(false)}
+          style={{ ...defaultStyle.button, ...styles.hintButton }}
+        />
       </View>
     </Modal>
   )
@@ -56,17 +63,17 @@ const HintModal = ({ modalVisible, setModalVisible, hint }) => {
 const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white' }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.leaveContainer}>
+        <Text style={styles.leaveMessage}>
           정말 나갈거야?
         </Text>
-        <View style={{ flexDirection: 'row' }}>
-          <TouchButton text='아니!' onPress={() => setModalVisible(false)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
-          <TouchButton text='나갈래!' onPress={() => navigation.popToTop()} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
+        <View style={styles.leaveButtonWrapper}>
+          <TouchButton text='아니👻' onPress={() => setModalVisible(false)} style={{ ...defaultStyle.button, ...styles.leaveButton }} />
+          <TouchButton text='나갈래🙀' onPress={() => navigation.popToTop()} style={{ ...defaultStyle.button, ...styles.leaveButton }} />
         </View>
       </View>
     </Modal>
@@ -76,13 +83,13 @@ const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
 const CompareModal = ({ modalVisible }) => {
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white', opacity: 0.5 }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
-          분석중...
+      <View style={styles.compareContainer}>
+        <Text style={styles.compareMessage}>
+          분석중...📡
         </Text>
       </View>
     </Modal>
@@ -92,23 +99,23 @@ const CompareModal = ({ modalVisible }) => {
 const ToastModal = ({ modalVisible, message }) => {
   return (
     <Modal
-      animationType="fade"
+      animationType='fade'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white', opacity: 0.5 }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.toastContainer}>
+        <Text style={styles.toastUsername}>
           {message}가
         </Text>
-        <Text style={{ fontSize: 30 }}>
-          정답을 맞췄어!
+        <Text style={styles.toastMessage}>
+          정답을 맞혔어!
         </Text>
       </View>
     </Modal>
   )
 };
 
-const TouchButton = ({ text, onPress, style = defaultStyle }) => {
+const TouchButton = ({ text, onPress, style = defaultStyle.button }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -229,50 +236,53 @@ const CameraComponent = ({
       <LeaveModal modalVisible={leaveModalVisible} setModalVisible={setLeaveModalVisible} navigation={navigation}/>
       <CompareModal modalVisible={compareModalVisible}/>
       <ToastModal modalVisible={toastModalVisible} message={toastMessage}/>
-      <View style={{ flex: 2.5, backgroundColor: 'transparent', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <TouchButton text='힌트' onPress={() => setHintModalVisible(true)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20 }}/>
-        <View style={{ alignSelf: 'center', backgroundColor: 'black' }}>
-          <Text style={{ color: 'white' }}>
+      <View style={styles.header}>
+        <Icon name='pencil-alt' size={30} color='#FFF' onPress={() => setHintModalVisible(true)} style={{ ...defaultStyle.button, ...styles.headerButton }} />
+        <View style={styles.timerWrapper}>
+          <Text style={styles.timer}>
             {minutes < 10 ? '0' + minutes : minutes}:{seconds < 10 ? '0' + seconds : seconds}
           </Text>
         </View>
-        <TouchButton text='나가기' onPress={() => setLeaveModalVisible(true)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20 }} />
+        <Icon name='door-closed' size={30} color='#FFF' onPress={() => setLeaveModalVisible(true)} style={{ ...defaultStyle.button, ...styles.headerButton }} />
       </View>
-      <View style={{ flex: 10, backgroundColor: 'transparent', alignItems: 'center' }}>
+      <View style={styles.cardContainer}>
         {isKeywordPhase
           ? <View>
-              <View style={{ width: 200, height: 50, backgroundColor: 'white', borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: 'red', fontSize: 16 }}>
+              <View style={styles.keywordCard}>
+                <Text style={styles.keywordCardMessage}>
                   {keyword}
                 </Text>
               </View>
               {similarList.length > 0 &&
-                <View style={{ width: 200, height: 100, backgroundColor: 'skyblue', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
-                  {similarList.map((name) => <Text key={name} style={{ color: 'white' }}>{name}</Text>)}
+                <View style={styles.similarListContainer}>
+                  {similarList.map((name) => <Text key={name} style={styles.similarKeyword}>{name}</Text>)}
                 </View>}
             </View>
-          : <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ alignItems: 'center', justifyContent: 'space-around', backgroundColor: 'white', width: 300, height: 400, borderRadius: 30, opacity: 0.9 }}>
-                <Text style={{ flex: 1, fontSize: 20, margin: 50 }}>
-                  <Text style={{ fontWeight: 'bold' }}>{'QUIZ\n'}</Text>
-                  {'\n'}
-                  {quiz}
-                </Text>
-                <TextInput
-                  style={{ flex: 0.2, height: 40, borderColor: 'gray', borderBottomWidth: 1, width: 150, textAlign: 'center' }}
-                  onChangeText={text => setInputValue(text)}
-                  value={inputValue}
-                  placeholder='정답을 입력해주세요!'
-                  placeholderTextColor='blue'
-                  onEndEditing={handleSubmit}
-                />
-              <TouchButton text='제출' onPress={handleSubmit} style={{ ...defaultStyle, backgroundColor: 'pink', margin: 20, width: 60, height: 40 }}/>
+          : <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.quizCardWrapper}>
+                <View style={styles.quizCard}>
+                  <Text style={styles.quizLabel}>
+                    <Text style={styles.quizTitle}>{'QUIZ\n'}</Text>
+                    {'\n'}
+                    {quiz}
+                  </Text>
+                  <TextInput
+                    style={styles.quizInput}
+                    onChangeText={text => setInputValue(text)}
+                    value={inputValue}
+                    placeholder='정답을 입력해주세요!'
+                    placeholderTextColor='blue'
+                    onEndEditing={handleSubmit}
+                  />
+                  <TouchButton text='제출' onPress={handleSubmit} style={{ ...defaultStyle.button, ...styles.quizSubmitButton }}/>
+                </View>
               </View>
-            </View>
+            </TouchableWithoutFeedback>
+
         }
       </View>
-      <View style={{ flex: 3, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-        <TouchButton text='찰칵' onPress={() => takePicture()}/>
+      <View style={styles.cameraButton}>
+        <TouchButton text='찰칵' onPress={() => takePicture()} />
       </View>
     </Camera>
   )
