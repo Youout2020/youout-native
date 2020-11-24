@@ -72,7 +72,6 @@ const App = ({ navigation }) => {
         const username = payload.game.users.filter((user) => user._id === payload.userId)[0].username;
         setGame(payload.game);
         setAnswerUsername(username);
-        console.log(username);
         break;
       }
     }

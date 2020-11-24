@@ -140,7 +140,7 @@ const CameraComponent = ({
   const [toastMessage, setToastMessage] = useState('');
   const [isKeywordPhase, setIsKeywordPhase] = useState(true);
   const [minutes, setMinutes] = useState(Math.floor((timeLimit / (1000 * 60))));
-  const [seconds, setSeconds] = useState(0);
+  const [seconds, setSeconds] = useState(59);
   const [similarList, setSimilarList] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const gameIndex = users.filter((user) => user._id === userId)[0].gameIndex + 1;
@@ -193,9 +193,7 @@ const CameraComponent = ({
       if (seconds === 0) {
         switch (minutes) {
           case 0:
-            // dispatch(disconnectGame({ gameId: game_id }));
-            // dispatch(setRoute('/games'));
-            // clearTimeout(timerId);
+            handleEndGame(0);
             break;
           default:
             setMinutes((prev) => prev - 1);
