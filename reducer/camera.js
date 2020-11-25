@@ -25,7 +25,6 @@ const initState = {
 
 export default createReducer(initState, {
   [SET_MODAL_VISIBLE]: (state, action) => {
-    console.log(action.payload);
     state.modalVisibles = action.payload;
   },
   [SET_IS_KEYWORD_PHASE]: (state, action) => {

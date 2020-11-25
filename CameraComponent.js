@@ -329,6 +329,9 @@ const CameraComponent = ({
               </View>
               {similarList.length > 0 &&
                 <View style={styles.similarListContainer}>
+                  <Text>
+                    분석 결과...
+                  </Text>
                   {similarList.map((name) => (
                     <Text key={name} style={styles.similarKeyword}>{name}</Text>
                   ))}
@@ -363,7 +366,7 @@ const CameraComponent = ({
       <View style={styles.cameraButton}>
         <TouchButton
           text='찰칵'
-          onPress={() => takePicture()}
+          onPress={takePicture}
         />
       </View>
     </Camera>

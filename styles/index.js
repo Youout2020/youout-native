@@ -177,11 +177,11 @@ export const styles = StyleSheet.create({
   similarListContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 200,
     height: 100,
     marginTop: 10,
     borderRadius: 20,
     backgroundColor: 'skyblue',
+    opacity: 0.9,
   },
   similarKeyword: {
     color: 'white',
