@@ -1,12 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Text, View, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Modal, TextInput } from 'react-native';
 import { Camera } from 'expo-camera';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+
 import { detectLabels, compareLabels } from './util/aws';
 import { styles, defaultStyle } from './styles';
+import {
+  setModalVisible,
+  setIsKeywordPhase,
+  setSimilarList,
+  setAnswerUsername,
+} from './reducer/camera';
 
+const KeywordModal = ({ modalVisible, keyword }) => {
+  const { modalVisibles } = useSelector((state) => state.camera);
+  const dispatch = useDispatch();
 
-const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
+  const handleOffModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, keyword: false }));
+  };
+
   return (
     <Modal
       animationType='slide'
@@ -25,7 +39,7 @@ const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
         </Text>
         <TouchButton
           text='OK 📷'
-          onPress={() => setModalVisible(false)}
+          onPress={handleOffModal}
           style={{ ...defaultStyle.button, ...styles.keywordButton }}
         />
       </View>
@@ -33,7 +47,14 @@ const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
   )
 };
 
-const HintModal = ({ modalVisible, setModalVisible, hint }) => {
+const HintModal = ({ modalVisible, hint }) => {
+  const { modalVisibles } = useSelector((state) => state.camera);
+  const dispatch = useDispatch();
+
+  const handleOffModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, hint: false }));
+  };
+
   return (
     <Modal
       animationType='slide'
@@ -52,7 +73,7 @@ const HintModal = ({ modalVisible, setModalVisible, hint }) => {
         </Text>
         <TouchButton
           text='OK👍'
-          onPress={() => setModalVisible(false)}
+          onPress={handleOffModal}
           style={{ ...defaultStyle.button, ...styles.hintButton }}
         />
       </View>
@@ -60,7 +81,19 @@ const HintModal = ({ modalVisible, setModalVisible, hint }) => {
   )
 };
 
-const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
+const LeaveModal = ({ modalVisible, navigation }) => {
+  const { modalVisibles } = useSelector((state) => state.camera);
+  const dispatch = useDispatch();
+
+  const handleOffModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, leave: false }));
+  };
+
+  const handleLeaveRoom = () => {
+    navigation.popToTop();
+    dispatch(setModalVisible({ ...modalVisibles, leave: false }));
+  };
+
   return (
     <Modal
       animationType='slide'
@@ -74,12 +107,12 @@ const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
         <View style={styles.leaveButtonWrapper}>
           <TouchButton
             text='아니👻'
-            onPress={() => setModalVisible(false)}
+            onPress={handleOffModal}
             style={{ ...defaultStyle.button, ...styles.leaveButton }}
           />
           <TouchButton
             text='나갈래🙀'
-            onPress={() => navigation.popToTop()}
+            onPress={handleLeaveRoom}
             style={{ ...defaultStyle.button, ...styles.leaveButton }}
           />
         </View>
@@ -139,66 +172,88 @@ const TouchButton = ({ text, onPress, style = defaultStyle.button }) => {
 const CameraComponent = ({
   navigation,
   cameraRef,
-  quizList,
-  timeLimit,
-  users,
-  userId,
   handleUpdateGame,
   handleEndGame,
-  answerUsername,
 }) => {
-  const [keywordModalVisible, setKeywordModalVisible] = useState(false);
-  const [hintModalVisible, setHintModalVisible] = useState(false);
-  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
-  const [compareModalVisible, setCompareModalVisible] = useState(false);
-  const [toastModalVisible, setToastModalVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [isKeywordPhase, setIsKeywordPhase] = useState(true);
-  const [minutes, setMinutes] = useState(Math.floor((timeLimit / (1000 * 60))));
-  const [seconds, setSeconds] = useState(59);
-  const [similarList, setSimilarList] = useState([]);
-  const [inputValue, setInputValue] = useState('');
-  const gameIndex = users.filter((user) => user._id === userId)[0].gameIndex + 1;
+  const {
+    modalVisibles,
+    isKeywordPhase,
+    similarList,
+    answerUsername,
+  } = useSelector((state) => state.camera);
+  const { id: userId } = useSelector((state) => state.user);
+  const { gameInfo, users } = useSelector((state) => state.game);
+  const { quizList, timeLimit, _id: gameId } = gameInfo;
+
+  const dispatch = useDispatch();
+
+  const [answerValue, setAnswerValue] = useState('');
+  const [minutes, setMinutes] = useState(99);
+  const [seconds, setSeconds] = useState(0);
+  const [toastModalVisibles, setToastModalVisibles] = useState(false);
+
+  const gameIndex = users.filter((user) => user._id === userId)[0]?.gameIndex + 1;
   const { keyword, hint, quiz, answer } = quizList[gameIndex];
 
   const initialSetting = () => {
-    setKeywordModalVisible(true);
+    console.log('init');
+    setMinutes(Math.floor((timeLimit / (1000 * 60))));
+    dispatch(setModalVisible({ ...modalVisibles, keyword: true }));
+  };
+
+  const handleOnHintModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, hint: true }));
+  };
+
+  const handleOnLeaveModal = () => {
+    console.log('open');
+    dispatch(setModalVisible({ ...modalVisibles, leave: true }));
+  };
+
+  const handleSetAnswer = (text) => {
+    setAnswerValue(text);
   };
 
   const takePicture = async () => {
-    setCompareModalVisible(true);
+    dispatch(setModalVisible({ ...modalVisibles, compare: true }));
+
     Vibration.vibrate();
 
     const options = { quality: 0.5, base64: true };
     const { base64 } = await cameraRef.current.takePictureAsync(options);
     const quiz = quizList[gameIndex];
-    const response = await detectLabels(base64);
+    // const response = await detectLabels(base64);
     // const isAnswer = await compareLabels({ keyword: quiz.keyword, response });
     const isAnswer = true;
 
-    setCompareModalVisible(false);
+    dispatch(setModalVisible({ ...modalVisibles, compare: false }));
 
     if (isAnswer) {
-      setIsKeywordPhase(false);
+      dispatch(setIsKeywordPhase(false));
     } else {
       const mappedList = response.Labels.slice(0, 3).map((label) => label.Name);
-      setSimilarList(mappedList);
-      setTimeout(() => setSimilarList([]), 3000);
+      dispatch(setSimilarList(mappedList));
+      setTimeout(() => dispatch(setSimilarList([])), 3000);
     }
   };
 
   const handleSubmit = () => {
-    if (inputValue === answer) {
+    if (answerValue === answer) {
       if (gameIndex + 1 === quizList.length) {
         const minutesToMs = (minutes + 1) * 60 * 1000;
         const secondsToMs = seconds * 1000;
+        const clearTime = minutesToMs + secondsToMs;
 
-        handleEndGame(minutesToMs + secondsToMs);
+        handleEndGame({ gameId, userId, clearTime });
       } else {
-        handleUpdateGame();
+        handleUpdateGame({ gameId, userId });
+        dispatch(setModalVisible({ ...modalVisibles, keyword: true }));
       }
+
+      dispatch(setIsKeywordPhase(true));
+      setAnswerValue('');
     } else {
-      setInputValue('땡!');
+      setAnswerValue('땡!');
     }
   }
 
@@ -208,7 +263,8 @@ const CameraComponent = ({
       if (seconds === 0) {
         switch (minutes) {
           case 0:
-            handleEndGame(0);
+            const clearTime = 0;
+            handleEndGame({ gameId, userId, clearTime });
             break;
           default:
             setMinutes((prev) => prev - 1);
@@ -222,14 +278,12 @@ const CameraComponent = ({
 
   useEffect(() => {
     if (!answerUsername) return;
-
-    setToastMessage(answerUsername);
-    setToastModalVisible(true);
+    setToastModalVisibles(true);
 
     setTimeout(() => {
-      setToastMessage('');
-      setToastModalVisible(false);
-    }, 1000)
+      setToastModalVisibles(false);
+      dispatch(setAnswerUsername(''));
+    }, 1000);
   }, [answerUsername]);
 
   return (
@@ -239,17 +293,17 @@ const CameraComponent = ({
       ref={cameraRef}
       onCameraReady={initialSetting}
     >
-      <KeywordModal modalVisible={keywordModalVisible} setModalVisible={setKeywordModalVisible} keyword={keyword} />
-      <HintModal modalVisible={hintModalVisible} setModalVisible={setHintModalVisible} hint={hint} />
-      <LeaveModal modalVisible={leaveModalVisible} setModalVisible={setLeaveModalVisible} navigation={navigation} />
-      <CompareModal modalVisible={compareModalVisible} />
-      <ToastModal modalVisible={toastModalVisible} message={toastMessage} />
+      <ToastModal modalVisible={toastModalVisibles} message={answerUsername} />
+      <KeywordModal modalVisible={modalVisibles.keyword} keyword={keyword} />
+      <HintModal modalVisible={modalVisibles.hint} hint={hint} />
+      <LeaveModal modalVisible={modalVisibles.leave} navigation={navigation} />
+      <CompareModal modalVisible={modalVisibles.compare} />
       <View style={styles.header}>
         <Icon
           name='pencil-alt'
           size={30}
           color='#FFF'
-          onPress={() => setHintModalVisible(true)}
+          onPress={handleOnHintModal}
           style={{ ...defaultStyle.button, ...styles.headerButton }}
         />
         <View style={styles.timerWrapper}>
@@ -261,7 +315,7 @@ const CameraComponent = ({
           name='door-closed'
           size={30}
           color='#FFF'
-          onPress={() => setLeaveModalVisible(true)}
+          onPress={handleOnLeaveModal}
           style={{ ...defaultStyle.button, ...styles.headerButton }}
         />
       </View>
@@ -290,8 +344,8 @@ const CameraComponent = ({
                   </Text>
                   <TextInput
                     style={styles.quizInput}
-                    onChangeText={text => setInputValue(text)}
-                    value={inputValue}
+                    onChangeText={handleSetAnswer}
+                    value={answerValue}
                     placeholder='정답을 입력해주세요!'
                     placeholderTextColor='blue'
                     onEndEditing={handleSubmit}
@@ -304,7 +358,6 @@ const CameraComponent = ({
                 </View>
               </View>
             </TouchableWithoutFeedback>
-
         }
       </View>
       <View style={styles.cameraButton}>

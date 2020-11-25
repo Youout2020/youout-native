@@ -4,9 +4,14 @@ import { Text, View, LogBox } from 'react-native';
 import { Camera } from 'expo-camera';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
+import { Provider, useDispatch } from 'react-redux';
 
 import WebViewComponent from './WebViewComponent';
 import CameraComponent from './CameraComponent';
+import store from './store';
+import { initUser } from './reducer/user';
+import { updateGame } from './reducer/game';
+import { setAnswerUsername } from './reducer/camera';
 
 LogBox.ignoreLogs(['Remote debugger']);
 
@@ -30,23 +35,23 @@ const emitWrapper = (ref) => {
 const App = ({ navigation }) => {
   const webviewRef = useRef();
   const cameraRef = useRef();
-  const [user, setUser] = useState({ id: '' });
-  const [game, setGame] = useState({ gameInfo: { quizList: [] }, users: [{ gameIndex: -1 }]});
-  const [answerUsername, setAnswerUsername] = useState('');
+
   const [hasPermission, setHasPermission] = useState(null);
-  const { gameInfo, users } = game;
+
+  const dispatch = useDispatch();
+
   const emit = emitWrapper(webviewRef);
 
   const handleEndLoading = () => {
     emit(TYPE.onNative);
   };
 
-  const handleUpdateGame = () => {
-    emit(TYPE.updateGame, { gameId: gameInfo._id, userId: user.id });
+  const handleUpdateGame = (data) => {
+    emit(TYPE.updateGame, data);
   }
 
-  const handleEndGame = (clearTime) => {
-    emit(TYPE.completeGame, { gameId: gameInfo._id, userId: user.id, clearTime });
+  const handleEndGame = (data) => {
+    emit(TYPE.completeGame, data);
     navigation.goBack();
   };
 
@@ -59,19 +64,19 @@ const App = ({ navigation }) => {
         break;
       }
       case TYPE.setUser: {
-        setUser(payload);
+        dispatch(initUser(payload));
         break;
       }
       case TYPE.setGame: {
-        setGame(payload);
-        setAnswerUsername('');
+        dispatch(updateGame(payload));
+        dispatch(setAnswerUsername(''));
         navigation.push('Camera');
         break;
       }
       case TYPE.updateGame: {
         const username = payload.game.users.filter((user) => user._id === payload.userId)[0].username;
-        setGame(payload.game);
-        setAnswerUsername(username);
+        dispatch(updateGame({ ...payload.game, gameId: payload.game._id }));
+        dispatch(setAnswerUsername(username));
         break;
       }
     }
@@ -93,16 +98,11 @@ const App = ({ navigation }) => {
       <CameraComponent
         cameraRef={cameraRef}
         navigation={navigation}
-        quizList={gameInfo.quizList}
-        timeLimit={gameInfo.timeLimit}
-        users={users}
-        userId={user.id}
         handleUpdateGame={handleUpdateGame}
         handleEndGame={handleEndGame}
-        answerUsername={answerUsername}
       />
     );
-  }, [users]);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -120,20 +120,24 @@ const App = ({ navigation }) => {
   }
 
   return (
-    <Stack.Navigator initialRouteName='WebView' screenOptions={{ headerShown: false, gestureEnabled: false }}>
-      <Stack.Screen name='WebView' component={WebViewContainer} />
-      <Stack.Screen name='Camera' component={CameraContainer} />
-    </Stack.Navigator>
+      <Stack.Navigator initialRouteName='WebView' screenOptions={{ headerShown: false, gestureEnabled: false }}>
+        <Stack.Screen name='WebView' component={WebViewContainer} />
+        <Stack.Screen name='Camera' component={CameraContainer} />
+      </Stack.Navigator>
   );
 }
 
 const AppContainer = () => {
   return (
+    <Provider store={store}>
+
     <NavigationContainer>
       <Stack.Navigator initialRouteName='Home' screenOptions={{ headerShown: false, gestureEnabled: false }}>
         <Stack.Screen name='Home' component={App}/>
       </Stack.Navigator>
     </NavigationContainer>
+    </Provider>
+
   )
 }
 
