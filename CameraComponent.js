@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Camera } from 'expo-camera';
 import { Text, View, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Modal, TextInput } from 'react-native';
-import { styles, defaultStyle } from './styles';
-import { detectLabels, compareLabels } from './util/aws';
+import { Camera } from 'expo-camera';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { detectLabels, compareLabels } from './util/aws';
+import { styles, defaultStyle } from './styles';
 
 
 const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
@@ -72,8 +72,16 @@ const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
           정말 나갈거야?
         </Text>
         <View style={styles.leaveButtonWrapper}>
-          <TouchButton text='아니👻' onPress={() => setModalVisible(false)} style={{ ...defaultStyle.button, ...styles.leaveButton }} />
-          <TouchButton text='나갈래🙀' onPress={() => navigation.popToTop()} style={{ ...defaultStyle.button, ...styles.leaveButton }} />
+          <TouchButton
+            text='아니👻'
+            onPress={() => setModalVisible(false)}
+            style={{ ...defaultStyle.button, ...styles.leaveButton }}
+          />
+          <TouchButton
+            text='나갈래🙀'
+            onPress={() => navigation.popToTop()}
+            style={{ ...defaultStyle.button, ...styles.leaveButton }}
+          />
         </View>
       </View>
     </Modal>
@@ -231,19 +239,31 @@ const CameraComponent = ({
       ref={cameraRef}
       onCameraReady={initialSetting}
     >
-      <KeywordModal modalVisible={keywordModalVisible} setModalVisible={setKeywordModalVisible} keyword={keyword}/>
-      <HintModal modalVisible={hintModalVisible} setModalVisible={setHintModalVisible} hint={hint}/>
-      <LeaveModal modalVisible={leaveModalVisible} setModalVisible={setLeaveModalVisible} navigation={navigation}/>
-      <CompareModal modalVisible={compareModalVisible}/>
-      <ToastModal modalVisible={toastModalVisible} message={toastMessage}/>
+      <KeywordModal modalVisible={keywordModalVisible} setModalVisible={setKeywordModalVisible} keyword={keyword} />
+      <HintModal modalVisible={hintModalVisible} setModalVisible={setHintModalVisible} hint={hint} />
+      <LeaveModal modalVisible={leaveModalVisible} setModalVisible={setLeaveModalVisible} navigation={navigation} />
+      <CompareModal modalVisible={compareModalVisible} />
+      <ToastModal modalVisible={toastModalVisible} message={toastMessage} />
       <View style={styles.header}>
-        <Icon name='pencil-alt' size={30} color='#FFF' onPress={() => setHintModalVisible(true)} style={{ ...defaultStyle.button, ...styles.headerButton }} />
+        <Icon
+          name='pencil-alt'
+          size={30}
+          color='#FFF'
+          onPress={() => setHintModalVisible(true)}
+          style={{ ...defaultStyle.button, ...styles.headerButton }}
+        />
         <View style={styles.timerWrapper}>
           <Text style={styles.timer}>
             {minutes < 10 ? '0' + minutes : minutes}:{seconds < 10 ? '0' + seconds : seconds}
           </Text>
         </View>
-        <Icon name='door-closed' size={30} color='#FFF' onPress={() => setLeaveModalVisible(true)} style={{ ...defaultStyle.button, ...styles.headerButton }} />
+        <Icon
+          name='door-closed'
+          size={30}
+          color='#FFF'
+          onPress={() => setLeaveModalVisible(true)}
+          style={{ ...defaultStyle.button, ...styles.headerButton }}
+        />
       </View>
       <View style={styles.cardContainer}>
         {isKeywordPhase
@@ -255,7 +275,9 @@ const CameraComponent = ({
               </View>
               {similarList.length > 0 &&
                 <View style={styles.similarListContainer}>
-                  {similarList.map((name) => <Text key={name} style={styles.similarKeyword}>{name}</Text>)}
+                  {similarList.map((name) => (
+                    <Text key={name} style={styles.similarKeyword}>{name}</Text>
+                  ))}
                 </View>}
             </View>
           : <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -274,7 +296,11 @@ const CameraComponent = ({
                     placeholderTextColor='blue'
                     onEndEditing={handleSubmit}
                   />
-                  <TouchButton text='제출' onPress={handleSubmit} style={{ ...defaultStyle.button, ...styles.quizSubmitButton }}/>
+                  <TouchButton
+                    text='제출'
+                    onPress={handleSubmit}
+                    style={{ ...defaultStyle.button, ...styles.quizSubmitButton }}
+                  />
                 </View>
               </View>
             </TouchableWithoutFeedback>
@@ -282,7 +308,10 @@ const CameraComponent = ({
         }
       </View>
       <View style={styles.cameraButton}>
-        <TouchButton text='찰칵' onPress={() => takePicture()} />
+        <TouchButton
+          text='찰칵'
+          onPress={() => takePicture()}
+        />
       </View>
     </Camera>
   )
