@@ -196,7 +196,6 @@ const CameraComponent = ({
   const { keyword, hint, quiz, answer } = quizList[gameIndex];
 
   const initialSetting = () => {
-    console.log('init');
     setMinutes(Math.floor((timeLimit / (1000 * 60))));
     dispatch(setModalVisible({ ...modalVisibles, keyword: true }));
   };
@@ -206,7 +205,6 @@ const CameraComponent = ({
   };
 
   const handleOnLeaveModal = () => {
-    console.log('open');
     dispatch(setModalVisible({ ...modalVisibles, leave: true }));
   };
 
@@ -219,11 +217,11 @@ const CameraComponent = ({
 
     Vibration.vibrate();
 
-    const options = { quality: 0.5, base64: true };
+    const options = { quality: 0.1, base64: true };
     const { base64 } = await cameraRef.current.takePictureAsync(options);
     const quiz = quizList[gameIndex];
     const response = await detectLabels(base64);
-    const isAnswer = await compareLabels({ keyword: quiz.keyword, response });
+    const isAnswer = await compareLabels({ keyword: quiz.keyword, data: response });
 
     dispatch(setModalVisible({ ...modalVisibles, compare: false }));
 
