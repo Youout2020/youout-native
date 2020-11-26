@@ -1,15 +1,7 @@
-window.Buffer = window.Buffer || require('buffer').Buffer;
-
-import { env } from '../env';
 import { translate } from './kakao';
+import getEnvVars from '../environment';
 
-const AWS = require('aws-sdk');
-const config = new AWS.Config({
-  accessKeyId: env.REACT_APP_AWS_accessKeyId,
-  secretAccessKey: env.REACT_APP_AWS_secretAccessKey,
-  region: 'ap-northeast-2',
-});
-const client = new AWS.Rekognition(config);
+const ENV = getEnvVars();
 
 export const compareLabels = async ({ keyword, response }) => {
   if (typeof keyword !== 'string') throw Error(`${keyword} should be string`);
@@ -20,21 +12,26 @@ export const compareLabels = async ({ keyword, response }) => {
   ));
 };
 
-export const detectLabels = (datauri) => {
-  return new Promise((resolve, reject) => {
-    const buffer = Buffer.from(datauri, 'base64');
-    const params = {
-      Image: {
-        Bytes: buffer
-      },
-      MaxLabels: 10,
-      MinConfidence: 70,
-    };
+const post = async ({ path, body, options = {} }) => {
+  const headers = {
+    'content-type': 'application/json',
+  };
 
-    client.detectLabels(params, function (err, response) {
-      if (err) return reject(err);
-      console.log(response);
-      resolve(response);
-    });
+  Object.keys(options).forEach((key) => {
+    headers[key.toLowerCase()] = options[key];
   });
+
+  const { data, errMessage, status } = await fetch(`${ENV.SERVER_URI}${path}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  }).then((result) => result.json());
+
+  if (status >= 400) throw Error(errMessage);
+
+  return data;
+};
+
+export const detectLabels = (datauri) => {
+  return await post({ path: '/aws/rekognition', body: { datauri } });
 };

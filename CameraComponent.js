@@ -222,9 +222,8 @@ const CameraComponent = ({
     const options = { quality: 0.5, base64: true };
     const { base64 } = await cameraRef.current.takePictureAsync(options);
     const quiz = quizList[gameIndex];
-    // const response = await detectLabels(base64);
-    // const isAnswer = await compareLabels({ keyword: quiz.keyword, response });
-    const isAnswer = true;
+    const response = await detectLabels(base64);
+    const isAnswer = await compareLabels({ keyword: quiz.keyword, response });
 
     dispatch(setModalVisible({ ...modalVisibles, compare: false }));
 
