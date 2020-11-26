@@ -1,7 +1,7 @@
 import { translate } from './kakao';
 import getEnvVars from '../environment';
 
-const ENV = getEnvVars();
+const { SERVER_URI } = getEnvVars();
 
 export const compareLabels = async ({ keyword, response }) => {
   if (typeof keyword !== 'string') throw Error(`${keyword} should be string`);
@@ -21,7 +21,7 @@ const post = async ({ path, body, options = {} }) => {
     headers[key.toLowerCase()] = options[key];
   });
 
-  const { data, errMessage, status } = await fetch(`${ENV.SERVER_URI}${path}`, {
+  const { data, errMessage, status } = await fetch(`${SERVER_URI}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
