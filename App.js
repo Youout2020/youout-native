@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler';
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View, LogBox } from 'react-native';
 import { Camera } from 'expo-camera';

@@ -1,10 +1,7 @@
 import React from 'react';
 import { WebView } from 'react-native-webview';
-
-import { env } from './env';
-
-const { USER_AGENT } = process.env;
-const { REACT_APP_WEB_VIEW_URI } = env;
+import getEnvVars from './environment';
+const { WEB_VIEW_URI, USER_AGENT } = getEnvVars();
 
 const WebViewComponent = ({ webviewRef, handleEndLoading, handleOnMessage }) => {
   return (
@@ -12,7 +9,7 @@ const WebViewComponent = ({ webviewRef, handleEndLoading, handleOnMessage }) => 
       onLoadEnd={handleEndLoading}
       onMessage={handleOnMessage}
       ref={webviewRef}
-      source={{ uri: REACT_APP_WEB_VIEW_URI }}
+      source={{ uri: WEB_VIEW_URI }}
       userAgent={USER_AGENT}
     />
   );
