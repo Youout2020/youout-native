@@ -3,12 +3,18 @@ import getEnvVars from '../environment';
 
 const { SERVER_URI } = getEnvVars();
 
+const format = (string) => {
+  return string.toLowerCase().replace(/(\s*)/g, '');
+};
+
 export const compareLabels = async ({ keyword, data }) => {
   if (typeof keyword !== 'string') throw Error(`${keyword} should be string`);
-  const translated = await translate(keyword);
+
+  const translatedKeyword = await translate(keyword);
+  const formattedKeyword = format(translatedKeyword);
 
   return data.Labels.some((label) => (
-    label.Name.toLowerCase() === translated.toLowerCase()
+    format(label.Name) === formattedKeyword
   ));
 };
 
