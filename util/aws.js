@@ -1,109 +1,47 @@
-window.Buffer = window.Buffer || require('buffer').Buffer;
-
-import { env } from '../env';
 import { translate } from './kakao';
+import getEnvVars from '../environment';
 
-const AWS = require('aws-sdk');
-const config = new AWS.Config({
-  accessKeyId: env.REACT_APP_AWS_accessKeyId,
-  secretAccessKey: env.REACT_APP_AWS_secretAccessKey,
-  region: 'ap-northeast-2', //seoul: ap-northeast-2
-});
-const client = new AWS.Rekognition(config);
+const { SERVER_URI } = getEnvVars();
 
-const mockResponse = {
-  Labels: [
-    {
-      Name: 'Banana',
-      Confidence: 99.89769744873047,
-      Instances: [],
-      Parents: []
-    },
-    {
-      Name: 'Accessory',
-      Confidence: 99.89769744873047,
-      Instances: [],
-      Parents: []
-    },
-    {
-      Name: 'Glasses',
-      Confidence: 99.89769744873047,
-      Instances: [Array],
-      Parents: [Array]
-    },
-    {
-      Name: 'Human',
-      Confidence: 99.7414779663086,
-      Instances: [],
-      Parents: []
-    },
-    {
-      Name: 'Face',
-      Confidence: 99.7414779663086,
-      Instances: [],
-      Parents: [Array]
-    },
-    {
-      Name: 'Person',
-      Confidence: 99.7414779663086,
-      Instances: [Array],
-      Parents: []
-    },
-    {
-      Name: 'Clothing',
-      Confidence: 80.54072570800781,
-      Instances: [],
-      Parents: []
-    },
-    {
-      Name: 'Portrait',
-      Confidence: 75.23353576660156,
-      Instances: [],
-      Parents: [Array]
-    },
-    {
-      Name: 'Photography',
-      Confidence: 75.23353576660156,
-      Instances: [],
-      Parents: [Array]
-    },
-    {
-      Name: 'Beard',
-      Confidence: 75.0804672241211,
-      Instances: [],
-      Parents: [Array]
-    }
-  ],
-  LabelModelVersion: '2.0'
+const format = (string) => {
+  return string.toLowerCase().replace(/(\s*)/g, '');
 };
 
-export const compareLabels = async ({ keyword, response }) => {
+export const compareLabels = async ({ keyword, data }) => {
   if (typeof keyword !== 'string') throw Error(`${keyword} should be string`);
-  const translated = await translate(keyword);
 
-  return response.Labels.some((label) => (
-    label.Name.toLowerCase() === translated.toLowerCase()
+  const translatedKeyword = await translate(keyword);
+  const formattedKeyword = format(translatedKeyword);
+
+  return data.Labels.some((label) => (
+    format(label.Name) === formattedKeyword
   ));
 };
 
-export const detectLabels = (datauri) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(mockResponse);
-    }, 1500);
-    // const buffer = Buffer.from(datauri, 'base64');
-    // const params = {
-    //   Image: {
-    //     Bytes: buffer
-    //   },
-    //   MaxLabels: 10,
-    //   MinConfidence: 70,
-    // };
+const post = async ({ path, body, options = {} }) => {
+  try {
+    const headers = {
+      'content-type': 'application/json',
+    };
 
-    // client.detectLabels(params, function (err, response) {
-    //   if (err) return reject(err);
-    //   console.log(response);
-    //   resolve(response);
-    // });
-  });
+    Object.keys(options).forEach((key) => {
+      headers[key.toLowerCase()] = options[key];
+    });
+
+    const { data, errMessage, status } = await fetch(`${SERVER_URI}${path}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    }).then((result) => result.json());
+
+    if (status >= 400) throw Error(errMessage);
+
+    return data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const detectLabels = async (datauri) => {
+  return await post({ path: '/aws/rekognition', body: { datauri: 'data:image/jpeg;base64,' + datauri } });
 };

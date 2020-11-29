@@ -1,72 +1,120 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Text, View, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Vibration, Modal, TextInput } from 'react-native';
 import { Camera } from 'expo-camera';
-import { Alert, Text, Button, View, TouchableOpacity, Vibration, LogBox, Modal, StyleSheet, TextInput } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { detectLabels, compareLabels } from './util/aws';
+import { styles, defaultStyle } from './styles';
+import {
+  setModalVisible,
+  setIsKeywordPhase,
+  setSimilarList,
+  setAnswerUsername,
+} from './reducer/camera';
 
-const defaultStyle = {
-  width: 100,
-  height: 100,
-  backgroundColor: 'white',
-  borderRadius: 50,
-  alignItems: 'center',
-  justifyContent: 'center'
-};
+const KeywordModal = ({ modalVisible, keyword }) => {
+  const { modalVisibles } = useSelector((state) => state.camera);
+  const dispatch = useDispatch();
 
-const KeywordModal = ({ modalVisible, setModalVisible, keyword }) => {
+  const handleOffModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, keyword: false }));
+  };
+
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white' }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.keywordContainer}>
+        <Text style={styles.keywordLabel}>
+          Keyword🐣
+        </Text>
+        <Text style={styles.keyword}>
           {keyword}
         </Text>
-        <Text style={{ fontSize: 30 }}>
+        <Text style={styles.keywordMessage}>
           찍어!
         </Text>
-        <TouchButton text='OK!' onPress={() => setModalVisible(false)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
+        <TouchButton
+          text='OK 📷'
+          onPress={handleOffModal}
+          style={{ ...defaultStyle.button, ...styles.keywordButton }}
+        />
       </View>
     </Modal>
   )
 };
 
-const HintModal = ({ modalVisible, setModalVisible, hint }) => {
+const HintModal = ({ modalVisible, hint }) => {
+  const { modalVisibles } = useSelector((state) => state.camera);
+  const dispatch = useDispatch();
+
+  const handleOffModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, hint: false }));
+  };
+
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white' }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.hintContainer}>
+        <Text style={styles.hintLabel}>
+          Hint🤡
+        </Text>
+        <Text style={styles.hint}>
           {hint}
         </Text>
-        <Text style={{ fontSize: 30 }}>
+        <Text style={styles.hintMessage}>
           이게 힌트야!
         </Text>
-        <TouchButton text='OK!' onPress={() => setModalVisible(false)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
+        <TouchButton
+          text='OK👍'
+          onPress={handleOffModal}
+          style={{ ...defaultStyle.button, ...styles.hintButton }}
+        />
       </View>
     </Modal>
   )
 };
 
-const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
+const LeaveModal = ({ modalVisible, navigation }) => {
+  const { modalVisibles } = useSelector((state) => state.camera);
+  const dispatch = useDispatch();
+
+  const handleOffModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, leave: false }));
+  };
+
+  const handleLeaveRoom = () => {
+    navigation.popToTop();
+    dispatch(setModalVisible({ ...modalVisibles, leave: false }));
+  };
+
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white' }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.leaveContainer}>
+        <Text style={styles.leaveMessage}>
           정말 나갈거야?
         </Text>
-        <View style={{ flexDirection: 'row' }}>
-          <TouchButton text='아니!' onPress={() => setModalVisible(false)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
-          <TouchButton text='나갈래!' onPress={() => navigation.popToTop()} style={{ ...defaultStyle, width: 60, height: 60, margin: 20, backgroundColor: 'skyblue' }} />
+        <View style={styles.leaveButtonWrapper}>
+          <TouchButton
+            text='아니👻'
+            onPress={handleOffModal}
+            style={{ ...defaultStyle.button, ...styles.leaveButton }}
+          />
+          <TouchButton
+            text='나갈래🙀'
+            onPress={handleLeaveRoom}
+            style={{ ...defaultStyle.button, ...styles.leaveButton }}
+          />
         </View>
       </View>
     </Modal>
@@ -76,13 +124,13 @@ const LeaveModal = ({ modalVisible, setModalVisible, navigation }) => {
 const CompareModal = ({ modalVisible }) => {
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white', opacity: 0.5 }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
-          분석중...
+      <View style={styles.compareContainer}>
+        <Text style={styles.compareMessage}>
+          분석중...📡
         </Text>
       </View>
     </Modal>
@@ -92,23 +140,23 @@ const CompareModal = ({ modalVisible }) => {
 const ToastModal = ({ modalVisible, message }) => {
   return (
     <Modal
-      animationType="fade"
+      animationType='fade'
       transparent={true}
       visible={modalVisible}
     >
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 200, backgroundColor: 'white', opacity: 0.5 }}>
-        <Text style={{ fontSize: 30, color: 'red' }}>
+      <View style={styles.toastContainer}>
+        <Text style={styles.toastUsername}>
           {message}가
         </Text>
-        <Text style={{ fontSize: 30 }}>
-          정답을 맞췄어!
+        <Text style={styles.toastMessage}>
+          정답을 맞혔어!
         </Text>
       </View>
     </Modal>
   )
 };
 
-const TouchButton = ({ text, onPress, style = defaultStyle }) => {
+const TouchButton = ({ text, onPress, style = defaultStyle.button }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -124,66 +172,85 @@ const TouchButton = ({ text, onPress, style = defaultStyle }) => {
 const CameraComponent = ({
   navigation,
   cameraRef,
-  quizList,
-  timeLimit,
-  users,
-  userId,
   handleUpdateGame,
   handleEndGame,
-  answerUsername,
 }) => {
-  const [keywordModalVisible, setKeywordModalVisible] = useState(false);
-  const [hintModalVisible, setHintModalVisible] = useState(false);
-  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
-  const [compareModalVisible, setCompareModalVisible] = useState(false);
-  const [toastModalVisible, setToastModalVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [isKeywordPhase, setIsKeywordPhase] = useState(true);
-  const [minutes, setMinutes] = useState(Math.floor((timeLimit / (1000 * 60))));
+  const {
+    modalVisibles,
+    isKeywordPhase,
+    similarList,
+    answerUsername,
+  } = useSelector((state) => state.camera);
+  const { id: userId } = useSelector((state) => state.user);
+  const { gameInfo, users } = useSelector((state) => state.game);
+  const { quizList, timeLimit, _id: gameId } = gameInfo;
+
+  const dispatch = useDispatch();
+
+  const [answerValue, setAnswerValue] = useState('');
+  const [minutes, setMinutes] = useState(99);
   const [seconds, setSeconds] = useState(0);
-  const [similarList, setSimilarList] = useState([]);
-  const [inputValue, setInputValue] = useState('');
-  const gameIndex = users.filter((user) => user._id === userId)[0].gameIndex + 1;
+  const [toastModalVisibles, setToastModalVisibles] = useState(false);
+
+  const gameIndex = users.filter((user) => user._id === userId)[0]?.gameIndex + 1;
   const { keyword, hint, quiz, answer } = quizList[gameIndex];
 
   const initialSetting = () => {
-    setKeywordModalVisible(true);
+    setMinutes(Math.floor((timeLimit / (1000 * 60))));
+    dispatch(setModalVisible({ ...modalVisibles, keyword: true }));
+  };
+
+  const handleOnHintModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, hint: true }));
+  };
+
+  const handleOnLeaveModal = () => {
+    dispatch(setModalVisible({ ...modalVisibles, leave: true }));
+  };
+
+  const handleSetAnswer = (text) => {
+    setAnswerValue(text);
   };
 
   const takePicture = async () => {
-    setCompareModalVisible(true);
+    dispatch(setModalVisible({ ...modalVisibles, compare: true }));
+
     Vibration.vibrate();
 
-    const options = { quality: 0.5, base64: true };
+    const options = { quality: 0.1, base64: true };
     const { base64 } = await cameraRef.current.takePictureAsync(options);
     const quiz = quizList[gameIndex];
     const response = await detectLabels(base64);
-    // const isAnswer = await compareLabels({ keyword: quiz.keyword, response });
-    const isAnswer = true;
+    const isAnswer = await compareLabels({ keyword: quiz.keyword, data: response });
 
-    setCompareModalVisible(false);
+    dispatch(setModalVisible({ ...modalVisibles, compare: false }));
 
     if (isAnswer) {
-      setIsKeywordPhase(false);
+      dispatch(setIsKeywordPhase(false));
     } else {
       const mappedList = response.Labels.slice(0, 3).map((label) => label.Name);
-      setSimilarList(mappedList);
-      setTimeout(() => setSimilarList([]), 3000);
+      dispatch(setSimilarList(mappedList));
+      setTimeout(() => dispatch(setSimilarList([])), 3000);
     }
   };
 
   const handleSubmit = () => {
-    if (inputValue === answer) {
+    if (answerValue === answer) {
       if (gameIndex + 1 === quizList.length) {
         const minutesToMs = (minutes + 1) * 60 * 1000;
         const secondsToMs = seconds * 1000;
+        const clearTime = minutesToMs + secondsToMs;
 
-        handleEndGame(minutesToMs + secondsToMs);
+        handleEndGame({ gameId, userId, clearTime });
       } else {
-        handleUpdateGame();
+        handleUpdateGame({ gameId, userId });
+        dispatch(setModalVisible({ ...modalVisibles, keyword: true }));
       }
+
+      dispatch(setIsKeywordPhase(true));
+      setAnswerValue('');
     } else {
-      setInputValue('땡!');
+      setAnswerValue('땡!');
     }
   }
 
@@ -193,9 +260,8 @@ const CameraComponent = ({
       if (seconds === 0) {
         switch (minutes) {
           case 0:
-            // dispatch(disconnectGame({ gameId: game_id }));
-            // dispatch(setRoute('/games'));
-            // clearTimeout(timerId);
+            const clearTime = 0;
+            handleEndGame({ gameId, userId, clearTime });
             break;
           default:
             setMinutes((prev) => prev - 1);
@@ -209,14 +275,12 @@ const CameraComponent = ({
 
   useEffect(() => {
     if (!answerUsername) return;
-
-    setToastMessage(answerUsername);
-    setToastModalVisible(true);
+    setToastModalVisibles(true);
 
     setTimeout(() => {
-      setToastMessage('');
-      setToastModalVisible(false);
-    }, 1000)
+      setToastModalVisibles(false);
+      dispatch(setAnswerUsername(''));
+    }, 1000);
   }, [answerUsername]);
 
   return (
@@ -226,55 +290,81 @@ const CameraComponent = ({
       ref={cameraRef}
       onCameraReady={initialSetting}
     >
-      <KeywordModal modalVisible={keywordModalVisible} setModalVisible={setKeywordModalVisible} keyword={keyword}/>
-      <HintModal modalVisible={hintModalVisible} setModalVisible={setHintModalVisible} hint={hint}/>
-      <LeaveModal modalVisible={leaveModalVisible} setModalVisible={setLeaveModalVisible} navigation={navigation}/>
-      <CompareModal modalVisible={compareModalVisible}/>
-      <ToastModal modalVisible={toastModalVisible} message={toastMessage}/>
-      <View style={{ flex: 2.5, backgroundColor: 'transparent', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <TouchButton text='힌트' onPress={() => setHintModalVisible(true)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20 }}/>
-        <View style={{ alignSelf: 'center', backgroundColor: 'black' }}>
-          <Text style={{ color: 'white' }}>
+      <ToastModal modalVisible={toastModalVisibles} message={answerUsername} />
+      <KeywordModal modalVisible={modalVisibles.keyword} keyword={keyword} />
+      <HintModal modalVisible={modalVisibles.hint} hint={hint} />
+      <LeaveModal modalVisible={modalVisibles.leave} navigation={navigation} />
+      <CompareModal modalVisible={modalVisibles.compare} />
+      <View style={styles.header}>
+        <Icon
+          name='pencil-alt'
+          size={30}
+          color='#FFF'
+          onPress={handleOnHintModal}
+          style={{ ...defaultStyle.button, ...styles.headerButton }}
+        />
+        <View style={styles.timerWrapper}>
+          <Text style={styles.timer}>
             {minutes < 10 ? '0' + minutes : minutes}:{seconds < 10 ? '0' + seconds : seconds}
           </Text>
         </View>
-        <TouchButton text='나가기' onPress={() => setLeaveModalVisible(true)} style={{ ...defaultStyle, width: 60, height: 60, margin: 20 }} />
+        <Icon
+          name='door-closed'
+          size={30}
+          color='#FFF'
+          onPress={handleOnLeaveModal}
+          style={{ ...defaultStyle.button, ...styles.headerButton }}
+        />
       </View>
-      <View style={{ flex: 10, backgroundColor: 'transparent', alignItems: 'center' }}>
+      <View style={styles.cardContainer}>
         {isKeywordPhase
           ? <View>
-              <View style={{ width: 200, height: 50, backgroundColor: 'white', borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: 'red', fontSize: 16 }}>
+              <View style={styles.keywordCard}>
+                <Text style={styles.keywordCardMessage}>
                   {keyword}
                 </Text>
               </View>
               {similarList.length > 0 &&
-                <View style={{ width: 200, height: 100, backgroundColor: 'skyblue', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
-                  {similarList.map((name) => <Text key={name} style={{ color: 'white' }}>{name}</Text>)}
+                <View style={styles.similarListContainer}>
+                  <Text>
+                    분석 결과...
+                  </Text>
+                  {similarList.map((name) => (
+                    <Text key={name} style={styles.similarKeyword}>{name}</Text>
+                  ))}
                 </View>}
             </View>
-          : <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ alignItems: 'center', justifyContent: 'space-around', backgroundColor: 'white', width: 300, height: 400, borderRadius: 30, opacity: 0.9 }}>
-                <Text style={{ flex: 1, fontSize: 20, margin: 50 }}>
-                  <Text style={{ fontWeight: 'bold' }}>{'QUIZ\n'}</Text>
-                  {'\n'}
-                  {quiz}
-                </Text>
-                <TextInput
-                  style={{ flex: 0.2, height: 40, borderColor: 'gray', borderBottomWidth: 1, width: 150, textAlign: 'center' }}
-                  onChangeText={text => setInputValue(text)}
-                  value={inputValue}
-                  placeholder='정답을 입력해주세요!'
-                  placeholderTextColor='blue'
-                  onEndEditing={handleSubmit}
-                />
-              <TouchButton text='제출' onPress={handleSubmit} style={{ ...defaultStyle, backgroundColor: 'pink', margin: 20, width: 60, height: 40 }}/>
+          : <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.quizCardWrapper}>
+                <View style={styles.quizCard}>
+                  <Text style={styles.quizLabel}>
+                    <Text style={styles.quizTitle}>{'QUIZ\n'}</Text>
+                    {'\n'}
+                    {quiz}
+                  </Text>
+                  <TextInput
+                    style={styles.quizInput}
+                    onChangeText={handleSetAnswer}
+                    value={answerValue}
+                    placeholder='정답을 입력해주세요!'
+                    placeholderTextColor='blue'
+                    onEndEditing={handleSubmit}
+                  />
+                  <TouchButton
+                    text='제출'
+                    onPress={handleSubmit}
+                    style={{ ...defaultStyle.button, ...styles.quizSubmitButton }}
+                  />
+                </View>
               </View>
-            </View>
+            </TouchableWithoutFeedback>
         }
       </View>
-      <View style={{ flex: 3, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-        <TouchButton text='찰칵' onPress={() => takePicture()}/>
+      <View style={styles.cameraButton}>
+        <TouchButton
+          text='찰칵'
+          onPress={takePicture}
+        />
       </View>
     </Camera>
   )
